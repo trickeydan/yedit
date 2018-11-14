@@ -1,0 +1,40 @@
+#! /usr/bin/env python3
+
+from ruamel.yaml import YAML
+
+import click, json, sys, tempfile, uuid, os
+
+@click.command()
+@click.argument('filename')
+def yedit(filename):
+    yaml = YAML(typ='safe')
+    temp_filename = "/tmp/yedit-{}".format(str(uuid.uuid4()))
+
+    
+    try:
+        with open(filename, "r") as fil:
+            obj = json.load(fil)
+
+    except FileNotFoundError:
+        click.echo("File not found: {}".format(filename), err=True)
+        sys.exit()
+    
+    except json.JSONDecodeError:
+        click.echo("Invalid JSON", err=True)
+        sys.exit()
+
+    with open(temp_filename, "w") as tempfile:
+        yml = yaml.dump(obj, tempfile)
+
+    click.edit(filename=temp_filename)
+
+    with open(temp_filename,"r") as tempfile:
+        obj = yaml.load(tempfile)
+    
+    with open(filename, "w") as fil:
+        json.dump(obj, fil)
+
+    os.remove(temp_filename)
+
+if __name__ == '__main__':
+    yedit()
